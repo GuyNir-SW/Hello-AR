@@ -183,25 +183,49 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         guard let planeAnchor = anchor as? ARPlaneAnchor else {return}
         print ("New flat surface detected")
         
+        let surfaceNode = createSurface(planeAnchor: planeAnchor)
+        
+        // Use the Node that was added by AR, when the plane was detected
+        node.addChildNode(surfaceNode)
+        
     }
     
     // Detect more area of plane
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
         guard let planeAnchor = anchor as? ARPlaneAnchor else {return}
         print ("Updating flat surface")
+        
+        // We need to remove the old surface and add a new one
+        node.enumerateChildNodes { (childNode, _) in
+            childNode.removeFromParentNode()
+        }
+        
+        let surfaceNode = createSurface(planeAnchor: planeAnchor)
+        
+        // Use the Node that was added by AR, when the plane was detected
+        node.addChildNode(surfaceNode)
+        
+        
+        
     }
     
     // Understand that 2 surfaces are actually one
     func renderer(_ renderer: SCNSceneRenderer, didRemove node: SCNNode, for anchor: ARAnchor) {
-        <#code#>
+        print ("Removing duplicate surface")
+        // We need to remove the old surface and add a new one
+        node.enumerateChildNodes { (childNode, _) in
+            childNode.removeFromParentNode()
+        }
     }
     
     
     // Set our own surface
-    func createSurface() -> SCNNode {
-        let surfaceNode = SCNNode(geometry: SCNPlane(width: 1, height: 1))
+    func createSurface(planeAnchor pa: ARPlaneAnchor) -> SCNNode {
+        let surfaceNode = SCNNode(geometry: SCNPlane(width: CGFloat(pa.extent.x), height: CGFloat(pa.extent.z)))
+        surfaceNode.geometry?.firstMaterial?.isDoubleSided = true
         surfaceNode.geometry?.firstMaterial?.diffuse.contents = UIImage(named: "wood")
-        surfaceNode.position = SCNVector3Make(0, 0, -1)
+        surfaceNode.position = SCNVector3Make(pa.center.x, pa.center.y, pa.center.z)
+        surfaceNode.eulerAngles = SCNVector3(Double(90).deg2Rad(), 0, 0)
         return surfaceNode
         
     }
@@ -252,6 +276,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         addedcubes = 0
         
     }
+    
+    // Not sure we need this, we are using "isHighlighted" in WillRenderScene
     @IBAction func Draw(_ sender: Any) {
     }
     
