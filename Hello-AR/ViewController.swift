@@ -151,10 +151,33 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             print ("found a node")
             
             
+            
+            
             let result = hitTouch.first!
             let geometry = result.node.geometry
             print (geometry)
-            animateNode(node: result.node)
+            
+            // For a surface - add jellyfish on top of it, all others - move them
+            if (result.node.name == "surface") {
+                print ("Surface node")
+                let jellyFishScene = SCNScene(named: "art.scnassets/Jellyfish.scn")
+                let jellyFishNode = jellyFishScene?.rootNode.childNode(withName: "JellyfishSG", recursively: false)
+                jellyFishNode?.name = "jellyfish"
+                
+                // Get the surface location
+                let transform = result.node.worldTransform
+                
+                
+                jellyFishNode?.position = SCNVector3Make(transform.m31, transform.m32, transform.m33)
+                
+                
+                // Add to root node, since surfaces gets updated all the time
+                self.sceneView.scene.rootNode.addChildNode(jellyFishNode!)
+                
+            }
+            else {
+                animateNode(node: result.node)
+            }
         }
     }
     
@@ -187,6 +210,9 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         // Use the Node that was added by AR, when the plane was detected
         node.addChildNode(surfaceNode)
+        
+        // Name this node
+        node.name = "surface"
         
     }
     
@@ -226,6 +252,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         surfaceNode.geometry?.firstMaterial?.diffuse.contents = UIImage(named: "wood")
         surfaceNode.position = SCNVector3Make(pa.center.x, pa.center.y, pa.center.z)
         surfaceNode.eulerAngles = SCNVector3(Double(90).deg2Rad(), 0, 0)
+        surfaceNode.name = "surface"
         return surfaceNode
         
     }
